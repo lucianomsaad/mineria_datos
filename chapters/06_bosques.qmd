@@ -1008,3 +1008,161 @@ La mejora de Bagging a Random Forest suele ser notable cuando hay muchas variabl
 | Relaciones principalmente lineales | Regresión regularizada (Ridge/Lasso) |
 
 ---
+
+## Discusión: ¿por qué funciona el promedio?
+
+La siguiente secuencia de preguntas está diseñada para que **redescubras** la lógica detrás de Bagging y Random Forest en lugar de solo recibirla. Cada pregunta lleva a la siguiente.
+
+::: {.callout-tip collapse="true"}
+## Pregunta 1 — El caso ideal
+
+> Un clasificador se equivoca el 30% de las veces de forma **independiente** a los demás. Si promedias 2 clasificadores así, ¿cuál es la probabilidad de que el ensemble se equivoque?  ¿Y con 10? ¿Y con 100?
+
+*Pista: el ensemble comete error solo si la mayoría vota mal. ¿Qué distribución describe eso?*
+
+**Para discutir:** ¿Qué condición es necesaria para que el promedio funcione tan bien? ¿Es realista en la práctica?
+:::
+
+::: {.callout-tip collapse="true"}
+## Pregunta 2 — El problema de la dependencia
+
+> En Bagging, todos los árboles se entrenan con datos del **mismo** dataset original. Si existe una variable muy predictiva (digamos, la más importante con diferencia), ¿qué harán casi todos los árboles en su primera división?
+
+**Para discutir:** Si 100 árboles hacen casi la misma primera división, ¿cuánto se parece esto a tener un solo árbol? ¿Qué ganamos realmente al promediarlos?
+:::
+
+::: {.callout-tip collapse="true"}
+## Pregunta 3 — El techo de Bagging
+
+> La varianza del promedio de $B$ árboles con correlación $\rho$ entre sí es:
+> $$\text{Var}[\bar{T}] = \rho\,\sigma^2 + \frac{1-\rho}{B}\,\sigma^2$$
+> Cuando $B \to \infty$, ¿qué término desaparece y cuál queda?
+
+**Para discutir:** ¿Qué implica eso sobre agregar árboles indefinidamente? ¿Cuál es la única forma de seguir reduciendo la varianza más allá de ese límite?
+:::
+
+::: {.callout-tip collapse="true"}
+## Pregunta 4 — Reinventando Random Forest
+
+> Quieres reducir $\rho$ — la correlación entre árboles — sin cambiar el dataset ni el tipo de modelo. ¿Qué modificación le harías al proceso de entrenamiento de cada árbol?
+
+*No hay una única respuesta correcta. Piensa qué es lo que hace que dos árboles se parezcan.*
+
+**Para discutir:** Compara tu propuesta con la de tus compañeros. ¿Alguna de las ideas coincide con lo que hace Random Forest? ¿Hay propuestas distintas que también podrían funcionar?
+:::
+
+::: {.callout-tip collapse="true"}
+## Pregunta 5 — El costo de decorrelacionar
+
+> Random Forest logra reducir $\rho$ limitando las variables disponibles en cada nodo. Pero si en un nodo solo puedes usar $m = 1$ variable (elegida al azar), ¿qué le pasa a la calidad de cada árbol individual?
+
+**Para discutir:** ¿Qué trade-off estás aceptando al reducir $m$? ¿Por qué $m = \sqrt{p}$ suele ser un buen balance y no $m = 1$?
+:::
+
+::: {.callout-caution collapse="true"}
+## Pregunta de cierre — Conectando todo
+
+> Imagina que tienes un dataset con 100 variables pero solo 3 son verdaderamente informativas y las 97 restantes son ruido puro. ¿Qué le pasaría a Bagging? ¿Y a Random Forest con $m = \sqrt{100} = 10$? ¿Qué valor de $m$ usarías tú y por qué?
+
+Esta pregunta no tiene una respuesta única — el objetivo es que justifiques tu razonamiento conectando varianza, correlación y sesgo.
+:::
+
+---
+
+## Tarea: ensemble sobre datos reales
+
+En esta tarea aplicarás Bagging y Random Forest al dataset de cáncer de mama (`breast_cancer` de scikit-learn), que ya conoces del capítulo anterior. El reto: **tomar todas tus decisiones de modelado usando únicamente el error OOB**, sin mirar el conjunto de test hasta el final.
+
+El dataset tiene 569 observaciones, 30 variables numéricas (características del núcleo celular) y dos clases: tumor maligno (1) o benigno (0).
+
+```{python}
+#| label: tarea-setup
+#| echo: true
+
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+
+data = load_breast_cancer()
+X_bc, y_bc = data.data, data.target
+feature_names = data.feature_names
+
+X_tr_bc, X_te_bc, y_tr_bc, y_te_bc = train_test_split(
+    X_bc, y_bc, test_size=0.2, random_state=42, stratify=y_bc
+)
+print(f"Entrenamiento: {X_tr_bc.shape} | Test: {X_te_bc.shape}")
+print(f"Variables: {feature_names.tolist()}")
+```
+
+### Parte 1 — ¿Cuántos árboles necesitas?
+
+Entrena un `BaggingClassifier` y un `RandomForestClassifier` variando `n_estimators` entre 2 y 200. Para cada valor y cada modelo registra el **error OOB**. Grafica ambas curvas en la misma figura y determina a partir de qué $B$ cada una se estabiliza. Usa ese valor en el resto de la tarea.
+
+```{python}
+#| label: tarea-parte1
+#| echo: true
+
+# Tu código aquí
+```
+
+**Preguntas:**
+
+- ¿A partir de qué $B$ el error OOB de cada modelo ya no mejora más de 0.5 puntos porcentuales?
+- ¿Convergen al mismo valor de error o uno de los dos es consistentemente mejor? ¿Por qué?
+- ¿Coincide ese umbral con lo que viste en los ejemplos del capítulo, o este dataset requiere más/menos árboles?
+
+### Parte 2 — Ajustando `max_features` (solo Random Forest)
+
+Con el $B$ fijado en la parte anterior, barre `max_features` desde 1 hasta $p = 30$ en el **Random Forest**. Para cada valor registra el **error OOB**. Grafica la curva.
+
+Bagging no tiene este dial — siempre usa las $p = 30$ variables en cada nodo, lo que equivale a `max_features=p` en la gráfica.
+
+```{python}
+#| label: tarea-parte2
+#| echo: true
+
+# Tu código aquí
+```
+
+**Preguntas:**
+
+- ¿Dónde está el mínimo OOB? ¿Coincide con el default $\sqrt{30} \approx 5$ o el óptimo está en otro valor?
+- ¿Qué dice eso sobre la estructura de este dataset — hay pocas variables muy dominantes o la información está distribuida?
+- Marca en la gráfica el punto que corresponde a Bagging ($m = 30$). ¿Cuánto mejora Random Forest sobre Bagging en este dataset?
+- Elige tu `max_features` óptimo y justifícalo.
+
+### Parte 3 — ¿En qué variables confiar?
+
+Obtén el ranking de importancia MDI para **Bagging** (promediando `feature_importances_` sobre los estimadores manualmente) y para **Random Forest** (directamente de `feature_importances_`). Grafícalos lado a lado junto con la Permutation Importance del Random Forest.
+
+```{python}
+#| label: tarea-parte3
+#| echo: true
+
+# Pista para la importancia MDI de Bagging:
+# import numpy as np
+# imp_bagging = np.mean([t.feature_importances_ for t in bag.estimators_], axis=0)
+```
+
+**Preguntas:**
+
+- ¿Coinciden los rankings de Bagging y Random Forest? Si difieren, ¿en qué variables y por qué crees que ocurre?
+- Compara el ranking MDI de Random Forest contra su Permutation Importance. ¿Hay variables donde difieran notablemente?
+- Si tuvieras que reducir el modelo a las 5 variables más importantes para una aplicación clínica, ¿qué ranking usarías y por qué?
+
+### Parte 4 — El veredicto
+
+Ahora sí, evalúa los tres modelos sobre el conjunto de test: árbol individual, Bagging y Random Forest (con los hiperparámetros elegidos en las partes anteriores). Reporta accuracy, precisión, recall y F1 para cada uno en una tabla comparativa.
+
+```{python}
+#| label: tarea-parte4
+#| echo: true
+
+# Tu código aquí
+```
+
+**Preguntas:**
+
+- ¿Qué tan bien aproximó el error OOB de cada modelo al error real en test? ¿Fue conservador o optimista?
+- ¿Cuánto mejora Bagging sobre el árbol individual? ¿Y Random Forest sobre Bagging? ¿En cuál salto hay mayor ganancia?
+- Considerando que en oncología un falso negativo (predecir benigno cuando es maligno) es mucho más costoso que un falso positivo, ¿cuál de los tres modelos elegirías y por qué? ¿Cambiaría tu respuesta si el criterio fuera minimizar intervenciones innecesarias?
+- ¿Cambiarías algo de tus decisiones de las partes 1 y 2 si hubieras podido mirar el test desde el principio?
