@@ -45,6 +45,32 @@ $$F(x) = \sum_{m=1}^{M} \alpha_m \, h_m(x)$$
 
 donde $h_m(x)$ es el $m$-ésimo aprendiz débil y $\alpha_m$ su peso asignado según su utilidad. La diferencia con bagging es que esta suma **no es paralela**: cada $h_m$ se entrena después de evaluar el error de $F_{m-1}(x)$.
 
+### El ciclo del error: cómo aprende cada modelo
+
+La mecánica central del boosting se puede descomponer en cuatro pasos que se repiten iteración tras iteración:
+
+1. **Calcular el error actual.** Dado el modelo acumulado hasta el momento $F_{m-1}(x)$, se calcula cuánto se equivoca en cada ejemplo:
+   $$r_i = y_i - F_{m-1}(x_i)$$
+   Estos **residuales** representan la señal que el modelo aún no ha capturado.
+
+2. **Entrenar un aprendiz débil sobre el error, no sobre los datos originales.** El siguiente modelo $h_m$ se ajusta para predecir $r_i$, no $y_i$. Su tarea no es aprender la relación completa entrada-salida, sino únicamente corregir lo que el modelo anterior dejó pendiente.
+
+3. **Sumar la corrección al modelo acumulado:**
+   $$F_m(x) = F_{m-1}(x) + \nu \cdot h_m(x)$$
+   donde $\nu \in (0, 1]$ es el *learning rate* que controla cuánto confiamos en cada corrección.
+
+4. **Repetir** hasta completar $M$ iteraciones o hasta que el error sea suficientemente pequeño.
+
+::: {.callout-note}
+## La intuición detrás del ciclo
+
+Cada aprendiz débil nunca ve el problema completo: solo ve el residuo que dejó su predecesor. Un árbol de profundidad 1 (decision stump) es suficiente porque su única responsabilidad es aproximar una fracción del error restante, no toda la función. La complejidad emerge de sumar muchas correcciones pequeñas, no de que cada corrector sea intrínsecamente poderoso.
+
+Esto también explica la importancia del *learning rate*: si $\nu = 1$ tomamos cada corrección al pie de la letra y convergemos rápido pero arriesgamos sobreajuste; si $\nu$ es pequeño, cada paso es conservador y necesitamos más iteraciones, pero el modelo final generaliza mejor.
+:::
+
+Esta mecánica es el denominador común de todos los algoritmos de boosting. AdaBoost la implementa a través de pesos sobre los ejemplos; Gradient Boosting la formaliza como descenso por gradiente sobre el espacio de funciones. Ambos, no obstante, comparten el mismo principio: **cada modelo simple aprende del error que dejó el anterior**.
+
 ### Intuición visual: boosting en acción
 
 Veamos el proceso en un problema de regresión 1D. Tenemos datos con una relación no lineal y observamos cómo boosting construye progresivamente una función más y más precisa.
