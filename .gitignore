@@ -222,3 +222,4 @@ __marimo__/
 .claude
 
 scripts/*
+*/catboost_info/*
