@@ -1495,24 +1495,6 @@ Los métodos de boosting son la familia de algoritmos más efectiva para datos t
 | **LightGBM** | Leaf-wise + GOSS + EFB | Velocidad, datasets grandes | Puede sobreajustar con datos pequeños |
 | **CatBoost** | Ordered boosting + cat nativas | "Out-of-the-box" excelente | Más lento que LightGBM |
 
-### Guía de decisión rápida
-
-```
-¿Datos tabulares con target continuo o binario/multiclase?
-│
-├─ ¿Muchas variables categóricas sin codificar?
-│   └─ Sí  → CatBoost
-│
-├─ ¿Dataset muy grande (>100k filas)?
-│   └─ Sí  → LightGBM
-│
-├─ ¿Primera vez o necesitas flexibilidad?
-│   └─ Sí  → XGBoost
-│
-└─ ¿Solo prototipando o clase?
-    └─ Sí  → sklearn GradientBoosting
-```
-
 ::: {.callout-tip}
 ## El consejo más importante
 

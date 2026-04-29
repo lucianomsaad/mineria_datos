@@ -40,8 +40,8 @@ Random Forests. Reducción de varianza. Importancia de Variables para estrategia
 ### Ensambles II - Boosting
 **Gradient Boosting (XGBoost).** Intuición de corrección de errores. *Tuning* básico. Evitar la derivación profunda, enfocar en aplicación.
 
-### Interpretabilidad (XAI)
-**SHAP y LIME.** Explicando la "Caja Negra" a los *stakeholders* y reguladores.
+### Redes neuronales
+Introducción a redes neuronales y arquitecturas populares.
 
 ## IV. Detección de Patrones
 
